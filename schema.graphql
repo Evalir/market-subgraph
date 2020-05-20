@@ -1,24 +1,35 @@
-type ExampleEntity @entity {
-  id: ID!
-  count: BigInt!
-  beneficiary: Bytes! # address
-}
-
+# BuyOrder represents a BuyOrder, which gets opened
+# when you try to buy ANJ with ANT.
 type BuyOrder @entity {
   id: ID!
-  buyer: Bytes! # address
-  batchId: BigInt! # block number
-  claimed: Boolean! # Claimed or not claimed
-  collateral: Bytes! # address to collateral
-  fee: BigInt! # Fee claimed by contract
-  value: BigInt! # Open order value
+  # Address of the buyer
+  buyer: Bytes!
+  # Block Number
+  batchId: BigInt!
+  # If an order has been claimed
+  claimed: Boolean!
+  # Address of the collateral used. For this subgraph, this should
+  # always be ANT
+  collateral: Bytes!
+  # Fee claimed by contract
+  fee: BigInt!
+  # The value held in the order.
+  value: BigInt!
 }
 
+# SellOrder represents a sell order, which gets opened
+# when you try to get ANT back from ANJ
 type SellOrder @entity {
   id: ID!
-  seller: Bytes! # address
-  batchId: BigInt! # block number
-  claimed: Boolean! # Claimed or not claimed
-  collateral: Bytes! # address to collateral
-  amount: BigInt! # The Sell order amount
+  # Address of the buyer
+  seller: Bytes!
+  # Block Number
+  batchId: BigInt!
+  # If an order has been claimed
+  claimed: Boolean!
+  # Address of the collateral used. For this subgraph, this should
+  # always be ANT
+  collateral: Bytes!
+  # The value held in the order.
+  amount: BigInt!
 }
