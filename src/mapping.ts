@@ -1,4 +1,4 @@
-import { BigInt } from "@graphprotocol/graph-ts"
+import { BigInt, log } from "@graphprotocol/graph-ts"
 import {
   Contract,
   UpdateBeneficiary,
@@ -21,7 +21,7 @@ import {
   ScriptResult,
   RecoverToVault
 } from "../generated/Contract/Contract"
-import { ExampleEntity } from "../generated/schema"
+import { BuyOrder, ExampleEntity, SellOrder } from "../generated/schema"
 
 export function handleUpdateBeneficiary(event: UpdateBeneficiary): void {
   // Entities can be loaded from the store using a string ID; this ID
@@ -124,13 +124,85 @@ export function handleUpdateCollateralToken(
 
 export function handleOpen(event: Open): void {}
 
-export function handleOpenBuyOrder(event: OpenBuyOrder): void {}
+export function handleOpenBuyOrder(event: OpenBuyOrder): void {
+  log.info("BuyOrder {}", [event.params.buyer.toHexString()])
+  let orderId = event.params.buyer.toHex() + '' + event.params.batchId.toString()
+  let buyOrder = BuyOrder.load(orderId)
 
-export function handleOpenSellOrder(event: OpenSellOrder): void {}
+  if (buyOrder == null) {
+    buyOrder = new BuyOrder(orderId)
+  } else {
+    log.warning("Found existing buy order with claimed status: {}", [buyOrder.claimed ? 'true' : 'false;'])
+  }
 
-export function handleClaimBuyOrder(event: ClaimBuyOrder): void {}
+  buyOrder.buyer = event.params.buyer
+  buyOrder.batchId = event.params.batchId
+  buyOrder.claimed = false
+  buyOrder.collateral = event.params.collateral
+  buyOrder.fee = event.params.fee
+  buyOrder.value = event.params.value
+  buyOrder.save()
+}
 
-export function handleClaimSellOrder(event: ClaimSellOrder): void {}
+export function handleOpenSellOrder(event: OpenSellOrder): void {
+  log.info("SellOrder from {}", [event.params.seller.toHexString()])
+  let orderId = event.transaction.hash.toHex() + '' + event.logIndex.toString()
+  let sellOrder = SellOrder.load(orderId)
+
+  if (sellOrder == null) {
+    sellOrder = new SellOrder(orderId)
+  } else {
+    log.warning("Found existing sell order with claimed status: {}", [sellOrder.claimed ? 'true' : 'false;'])
+  }
+
+  sellOrder.seller = event.params.seller
+  sellOrder.batchId = event.params.batchId
+  sellOrder.claimed = false
+  sellOrder.collateral = event.params.collateral
+  sellOrder.amount = event.params.amount
+  sellOrder.save()
+}
+
+export function handleClaimBuyOrder(event: ClaimBuyOrder): void {
+  log.info("BuyOrder claimed from {}", [event.params.buyer.toHexString()])
+  let orderId = event.params.buyer.toHex() + '' + event.params.batchId.toString()
+  let buyOrder = BuyOrder.load(orderId)
+
+  if (buyOrder == null) {
+    log.warning(
+      "WARNING: Found non-indexed order with buyer {} and batchId {}",
+      [
+        event.params.buyer.toHex(),
+        event.params.batchId.toString()
+      ]
+    )
+    buyOrder = new BuyOrder(orderId)
+  }
+
+  buyOrder.claimed = true
+  buyOrder.save()
+}
+
+export function handleClaimSellOrder(event: ClaimSellOrder): void {
+  log.info("BuyOrder claimed from {}", [event.params.seller.toHexString()])
+  let orderId = event.params.seller.toHex() + '' + event.params.batchId.toString()
+  let sellOrder = SellOrder.load(orderId)
+
+  if (sellOrder == null) {
+    log.warning(
+      "WARNING: Found non-indexed order with buyer {} and batchId {}",
+      [
+        event.params.seller.toHex(),
+        event.params.batchId.toString()
+      ]
+    )
+    sellOrder = new SellOrder(orderId)
+  }
+
+  sellOrder.claimed = true
+  sellOrder.save()
+
+}
 
 export function handleClaimCancelledBuyOrder(
   event: ClaimCancelledBuyOrder

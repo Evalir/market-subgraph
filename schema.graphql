@@ -3,3 +3,22 @@ type ExampleEntity @entity {
   count: BigInt!
   beneficiary: Bytes! # address
 }
+
+type BuyOrder @entity {
+  id: ID!
+  buyer: Bytes! # address
+  batchId: BigInt! # block number
+  claimed: Boolean! # Claimed or not claimed
+  collateral: Bytes! # address to collateral
+  fee: BigInt! # Fee claimed by contract
+  value: BigInt! # Open order value
+}
+
+type SellOrder @entity {
+  id: ID!
+  seller: Bytes! # address
+  batchId: BigInt! # block number
+  claimed: Boolean! # Claimed or not claimed
+  collateral: Bytes! # address to collateral
+  amount: BigInt! # The Sell order amount
+}
