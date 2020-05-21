@@ -60,7 +60,18 @@ export function handleOpenBuyOrder(event: OpenBuyOrder): void {
   if (buyOrder == null) {
     buyOrder = new BuyOrder(orderId)
   } else {
-    log.warning("Found existing buy order with claimed status: {}", [buyOrder.claimed ? 'true' : 'false;'])
+    log.warning(
+      "Found existing buy order with claimed status: {}, batch id {}, seller {}, amount {}. The event found batchId {}, seller {}, amount {}",
+      [
+        buyOrder.claimed ? 'true' : 'false',
+        buyOrder.batchId.toString(),
+        buyOrder.buyer.toHex(),
+        buyOrder.collateral.toString(),
+        event.params.batchId.toString(),
+        event.params.buyer.toHex(),
+        event.params.collateral.toString(),
+      ]
+    )
   }
 
   buyOrder.buyer = event.params.buyer
@@ -81,13 +92,15 @@ export function handleOpenSellOrder(event: OpenSellOrder): void {
     sellOrder = new SellOrder(orderId)
   } else {
     log.warning(
-      "Found existing sell order with claimed status: {}, batch id {}, seller {}. The event found batchId {}, seller {}",
+      "Found existing sell order with claimed status: {}, batch id {}, seller {}, amount {}. The event found batchId {}, seller {}, amount {}",
       [
         sellOrder.claimed ? 'true' : 'false',
         sellOrder.batchId.toString(),
         sellOrder.seller.toHex(),
+        sellOrder.amount.toString(),
         event.params.batchId.toString(),
         event.params.seller.toHex(),
+        event.params.amount.toString(),
       ]
     )
   }
@@ -105,6 +118,11 @@ export function handleClaimBuyOrder(event: ClaimBuyOrder): void {
   let orderId = event.params.buyer.toHex() + '' + event.params.batchId.toString()
   let buyOrder = BuyOrder.load(orderId)
 
+  // If this happens, there's a problem with the state reducing,
+  // as this should be impossible. For every ClaimBuyOrder event, there should always be
+  // OpenBuyOrder event. This code is here so the subgraph automatically stops reducing
+  // as soon as this condition is reached, if it ever does happen.
+  // Note: this will happen due to the new buyOrder entry having missing non-nullable properties.
   if (buyOrder == null) {
     log.warning(
       "WARNING: Found non-indexed order with buyer {} and batchId {}",
